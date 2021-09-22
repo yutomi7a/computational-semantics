@@ -1,7 +1,7 @@
 module FPH
 
 import Data.List
-import Data.Strings
+import Data.String
 
 square : Int -> Int
 square x = x * x
