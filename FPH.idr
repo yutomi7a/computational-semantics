@@ -36,7 +36,7 @@ story n    = (storec n) where
 
 reversal : String -> String
 reversal xs = reversAcc (unpack xs) "" where
-  reversAcc : List Char -> String -> String
+  reversAcc : List Char -> String ->String
   reversAcc Nil       ys = ys
   reversAcc (x :: xs) ys = reversAcc xs (strCons x ys)
 
@@ -88,12 +88,14 @@ prefix' : Eq a => List a -> List a -> Bool
 prefix' []      ys      = True
 prefix' (x::xs) []      = False
 prefix' (x::xs) (y::ys) = (x==y) && prefix' xs ys
-{-
+
 prefixString : String -> String -> Bool
-prefixString "" _ = True
-prefixString _ "" = False
-prefixString xstr ystr = (prim__strHead xstr) == (prim__strHead ystr) && prefixString (strTail xstr) (strTail ystr)
--}
+prefixString xs ys = prefixStrM (strM xs) (strM ys) where
+  prefixStrM : StrM _ -> StrM _ -> Bool
+  prefixStrM StrNil _ = True
+  prefixStrM _ StrNil = False
+  prefixStrM (StrCons x xs) (StrCons y ys) = x==y && prefixString xs ys
+
 
 mutual
   even : Nat -> Bool
@@ -121,8 +123,39 @@ process : String -> List String
 process = sort . nub . words
 
 
-cnt : String -> List (String, Int)
+
+export cnt : String -> List (String, Int)
 cnt sonnet = [ (x,n)| x <- (process . preprocess) sonnet,
                  n <- [count x (words (preprocess sonnet))],
                  n > 1
              ]
+
+ 
+ront : Char -> Char
+front s = case s of 
+          'a' => 'ä'
+          'o' => 'ö'
+          'u' => 'y'
+          _ => s
+
+
+back : Char -> Char
+back s = case s of 
+          'ä' => 'a'
+          'ö' => 'o'
+          'y' => 'u'
+          _ => s
+
+
+appendSuffixF : String -> String -> String
+appendSuffixF stem suffix = stem ++ pack (mapImpl vh (unpack suffix))
+  where
+    vh : Char -> Char 
+    vh = if isCons [ p | p <- (unpack stem), elem p ['a', 'o', 'u']] 
+          then back 
+          else
+          if isCons [ p | p <- (unpack stem), elem p ['ä', 'ö', 'y']]
+             then front
+             else id
+           
+
