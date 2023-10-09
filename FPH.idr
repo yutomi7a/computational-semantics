@@ -90,12 +90,10 @@ prefix' (x::xs) []      = False
 prefix' (x::xs) (y::ys) = (x==y) && prefix' xs ys
 
 prefixString : String -> String -> Bool
-prefixString xs ys = prefixStrM (strM xs) (strM ys) where
-  prefixStrM : StrM _ -> StrM _ -> Bool
-  prefixStrM StrNil _ = True
-  prefixStrM _ StrNil = False
-  prefixStrM (StrCons x xs) (StrCons y ys) = x==y && prefixString xs ys
-
+prefixString xs ys = case ((strM xs), (strM ys)) of
+                          (StrNil, _) => True
+                          (_, StrNil) => False
+                          ((StrCons x xs), (StrCons y ys)) => x == y && prefixString xs ys
 
 mutual
   even : Nat -> Bool
@@ -125,13 +123,13 @@ process = sort . nub . words
 
 
 export cnt : String -> List (String, Int)
-cnt sonnet = [ (x,n)| x <- (process . preprocess) sonnet,
+cnt sonnet = [ (x,n) | x <- (process . preprocess) sonnet,
                  n <- [count x (words (preprocess sonnet))],
                  n > 1
              ]
 
  
-ront : Char -> Char
+front : Char -> Char
 front s = case s of 
           'a' => 'ä'
           'o' => 'ö'
@@ -146,15 +144,20 @@ back s = case s of
           'y' => 'u'
           _ => s
 
+matchPs : List Char -> String -> Bool
+matchPs pList morph = case (strM morph) of
+                           StrNil       => False
+                           (StrCons p ps) => elem p pList || matchPs pList ps
+
 
 appendSuffixF : String -> String -> String
-appendSuffixF stem suffix = stem ++ pack (mapImpl vh (unpack suffix))
+appendSuffixF stem suffix = stem ++ pack [ vh p | p <- (unpack suffix)]
   where
     vh : Char -> Char 
-    vh = if isCons [ p | p <- (unpack stem), elem p ['a', 'o', 'u']] 
+    vh = if matchPs ['a', 'o', 'u'] stem
           then back 
           else
-          if isCons [ p | p <- (unpack stem), elem p ['ä', 'ö', 'y']]
+          if matchPs ['ä', 'ö', 'y'] stem
              then front
              else id
            
